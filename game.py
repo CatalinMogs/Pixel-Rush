@@ -15,10 +15,14 @@ class Player(pygame.sprite.Sprite):
         self.rect = self.image.get_rect(midbottom = (80, 300))
         self.gravity = 0
 
+        self.jump_sound = pygame.mixer.Sound('audio/jump.mp3')
+        self.jump_sound.set_volume(0.5)
+
     def player_input(self):
         keys = pygame.key.get_pressed()
         if keys[pygame.K_SPACE] and self.rect.bottom >= 300:
             self.gravity = -20
+            self.jump_sound.play()
 
     def apply_gravity(self):
         self.gravity += 1
@@ -125,6 +129,8 @@ test_font = pygame.font.Font('font/Pixeltype.ttf', 50)
 game_active = False
 start_time = 0
 score = 0
+bg_music = pygame.mixer.Sound('audio/music.wav')
+bg_music.play(loops = -1)
 
 # Groups
 player = pygame.sprite.GroupSingle()
@@ -134,9 +140,6 @@ obstacle_group = pygame.sprite.Group()
 
 sky_surface = pygame.image.load('graphics/Sky.png').convert()
 ground_surface = pygame.image.load('graphics/ground.png').convert()
-
- # score_surface = test_font.render('My game', False, (64, 64, 64))
- # score_rect = score_surface.get_rect(center = (400, 50))
 
 # Snail
 snail_frame_1 = pygame.image.load('graphics/Snail/snail1.png').convert_alpha()
@@ -207,10 +210,6 @@ while True:
         if game_active:    
             if event.type == obstacle_timer:
                 obstacle_group.add(Obstacle(choice(['fly', 'snail', 'snail', 'snail'])))
-               # if randint(0, 2):
-               #     obstacle_rect_list.append(snail_surf.get_rect(bottomright = (randint(900, 1100), 300)))
-               # else:
-               #     obstacle_rect_list.append(fly_surf.get_rect(bottomright = (randint(900, 1100), 210)))
             
             if event.type == snail_animation_timer:
                 if snail_frame_index == 0: snail_frame_index = 1
@@ -225,33 +224,18 @@ while True:
     if game_active:    
         screen.blit(sky_surface, (0, 0))
         screen.blit(ground_surface, (0, 300))
-       # pygame.draw.rect(screen, '#c0e8ec', score_rect, 12)
-       # pygame.draw.rect(screen, '#c0e8ec', score_rect)
-       # screen.blit(score_surface, score_rect)
+
         score = display_score()
 
-       # snail_rect.x -= 4
-       # if snail_rect.right <= 0: snail_rect.left = 800
-       # screen.blit(snail_surface, snail_rect)
-
         # Player
-       # player_gravity += 1
-       # player_rect.y += player_gravity
-       # if player_rect.bottom >= 300: player_rect.bottom = 300
-       # player_animation()
-       # screen.blit(player_surf, player_rect)
         player.draw(screen)
         player.update()
 
         obstacle_group.draw(screen)
         obstacle_group.update()
 
-        # Obstacle movement
-       # obstacle_rect_list = obstacle_movement(obstacle_rect_list)
-
         # collision
         game_active = collision_sprite()
-       # game_active = collisions(player_rect, obstacle_rect_list)
 
     else:
         screen.fill((94, 129, 162))
