@@ -194,31 +194,27 @@ while True:
             pygame.quit()
             exit()
 
-        if game_active:
-            if event.type == pygame.MOUSEBUTTONDOWN:
-                        if player_rect.bottom >= 300:
-                            player_gravity = -20
-        
-            if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_SPACE and player_rect.bottom >= 300:
-                    player_gravity = -20
-        else:
-             if event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
-                  game_active = True
-                  start_time = int(pygame.time.get_ticks() / 1000)
+        if not game_active:
+            if event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
+                game_active = True
+                start_time = int(pygame.time.get_ticks() / 1000)
 
-        if game_active:    
+        if game_active:
             if event.type == obstacle_timer:
                 obstacle_group.add(Obstacle(choice(['fly', 'snail', 'snail', 'snail'])))
-            
+
             if event.type == snail_animation_timer:
-                if snail_frame_index == 0: snail_frame_index = 1
-                else: snail_frame_index = 0
+                if snail_frame_index == 0:
+                    snail_frame_index = 1
+                else:
+                    snail_frame_index = 0
                 snail_surf = snail_frames[snail_frame_index]
 
             if event.type == fly_animation_timer:
-                if fly_frame_index == 0: fly_frame_index = 1
-                else: fly_frame_index = 0
+                if fly_frame_index == 0:
+                    fly_frame_index = 1
+                else:
+                    fly_frame_index = 0
                 fly_surf = fly_frames[fly_frame_index]
 
     if game_active:    
@@ -241,8 +237,8 @@ while True:
         screen.fill((94, 129, 162))
         screen.blit(player_stand, player_stand_rect)
         obstacle_rect_list.clear()
-        player_rect.midbottom = (80, 300)
-        player_gravity = 0
+        player.sprite.rect.midbottom = (80, 300)
+        player.sprite.gravity = 0
 
         score_message = test_font.render(f'Your score: {score}', False, (111, 196, 169))
         score_message_rect = score_message.get_rect(center = (400, 330))
