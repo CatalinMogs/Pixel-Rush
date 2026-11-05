@@ -76,12 +76,40 @@ class Obstacle(pygame.sprite.Sprite):
         if self.rect.x <= -100:
             self.kill()
 
+class Coin(pygame.sprite.Sprite):
+    def __init__(self, y_pos, x_pos = None):
+        super().__init__()
+
+        self.image = pygame.image.load('graphics/coin.png').convert_alpha()
+
+        if x_pos is None:
+            x_pos = randint(850, 1100)
+
+        self.rect = self.image.get_rect(midbottom = (randint(850, 1100), y_pos))
+
+    def update(self):
+        self.rect.x -= 6
+
+        if self.rect.x <= -100:
+            self.kill()
+        
+
 def display_score():
     current_time = int(pygame.time.get_ticks() / 1000) - start_time
     score_surf = test_font.render(f'Score: {current_time}', False, (64, 64, 64))
     score_rect = score_surf.get_rect(center = (400, 50))
     screen.blit(score_surf, score_rect)
     return current_time
+
+def coins_collected():
+    coin_surf = test_font.render(
+        f'Coins: {coin_count}',
+        False,
+        (255, 215, 0)
+    )
+
+    coin_rect = coin_surf.get_rect(topright = (780, 10))
+    screen.blit(coin_surf, coin_rect)
 
 def obstacle_movement(obstacle_list):
     if obstacle_list:
@@ -107,6 +135,7 @@ def collisions(player, obstacles):
 def collision_sprite():
     if pygame.sprite.spritecollide(player.sprite, obstacle_group, False):
         obstacle_group.empty()
+        coin_group.empty()
         return False
     else:
         return True
@@ -121,6 +150,41 @@ def player_animation():
         if player_index >= len(player_walk):player_index = 0
         player_surf = player_walk[int(player_index)]
 
+def spawn_coin():
+    y_pos = choice([200, 300])
+
+    new_coin = Coin(y_pos)
+
+    keep_distance(new_coin, obstacle_group)
+
+    coin_group.add(new_coin)
+
+def keep_distance(sprite, group, distance = 180):
+    while True:
+        conflict = None
+
+        for other in group:
+            too_close = (
+                sprite.rect.left < other.rect.right + distance
+                and sprite.rect.right > other.rect.left - distance
+            )
+
+            if too_close:
+                conflict = other
+                break
+
+        if conflict is None:
+            break
+
+        sprite.rect.left = conflict.rect.right + distance
+
+def spawn_obstacle():
+    new_obstacle = Obstacle(choice(['fly', 'snail', 'snail', 'snail']))
+
+    keep_distance(new_obstacle, coin_group)
+
+    obstacle_group.add(new_obstacle)
+
 pygame.init()
 screen = pygame.display.set_mode((800, 400))
 pygame.display.set_caption('Pixel Rush')
@@ -129,6 +193,7 @@ test_font = pygame.font.Font('font/Pixeltype.ttf', 50)
 game_active = False
 start_time = 0
 score = 0
+coin_count = 0
 bg_music = pygame.mixer.Sound('audio/music.wav')
 bg_music.play(loops = -1)
 
@@ -138,8 +203,13 @@ player.add(Player())
 
 obstacle_group = pygame.sprite.Group()
 
+coin_group = pygame.sprite.Group()
+
 sky_surface = pygame.image.load('graphics/Sky.png').convert()
 ground_surface = pygame.image.load('graphics/ground.png').convert()
+
+# Coin
+coin = pygame.image.load('graphics/coin.png').convert_alpha()
 
 # Snail
 snail_frame_1 = pygame.image.load('graphics/Snail/snail1.png').convert_alpha()
@@ -188,6 +258,9 @@ pygame.time.set_timer(snail_animation_timer, 500)
 fly_animation_timer = pygame.USEREVENT + 3
 pygame.time.set_timer(fly_animation_timer, 200)
 
+coin_timer = pygame.USEREVENT + 4
+pygame.time.set_timer(coin_timer, 2000)
+
 while True:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -198,10 +271,11 @@ while True:
             if event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
                 game_active = True
                 start_time = int(pygame.time.get_ticks() / 1000)
+                coin_count = 0
 
         if game_active:
             if event.type == obstacle_timer:
-                obstacle_group.add(Obstacle(choice(['fly', 'snail', 'snail', 'snail'])))
+                spawn_obstacle()
 
             if event.type == snail_animation_timer:
                 if snail_frame_index == 0:
@@ -217,11 +291,16 @@ while True:
                     fly_frame_index = 0
                 fly_surf = fly_frames[fly_frame_index]
 
+            if event.type == coin_timer:
+                spawn_coin()
+
     if game_active:    
         screen.blit(sky_surface, (0, 0))
         screen.blit(ground_surface, (0, 300))
 
         score = display_score()
+
+        coins = coins_collected()
 
         # Player
         player.draw(screen)
@@ -229,6 +308,17 @@ while True:
 
         obstacle_group.draw(screen)
         obstacle_group.update()
+
+        coin_group.draw(screen)
+        coin_group.update()
+
+        collected_coins = pygame.sprite.spritecollide(
+            player.sprite,
+            coin_group,
+            True
+        )
+
+        coin_count += len(collected_coins)
 
         # collision
         game_active = collision_sprite()
