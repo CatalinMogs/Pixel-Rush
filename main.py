@@ -1,21 +1,23 @@
 import pygame
 from sys import exit
 from random import randint, choice
+import os
+import sys
 
 class Player(pygame.sprite.Sprite):
     def __init__(self):
         super().__init__()
-        self.player_walk_1 = pygame.image.load('graphics/Player/player_walk_1.png').convert_alpha()
-        self.player_walk_2 = pygame.image.load('graphics/Player/player_walk_2.png').convert_alpha()
+        self.player_walk_1 = pygame.image.load(resource_path('graphics/Player/player_walk_1.png')).convert_alpha()
+        self.player_walk_2 = pygame.image.load(resource_path('graphics/Player/player_walk_2.png')).convert_alpha()
         self.player_walk = [self.player_walk_1, self.player_walk_2]
         self.player_index = 0
-        self.player_jump = pygame.image.load('graphics/Player/jump.png').convert_alpha()
+        self.player_jump = pygame.image.load(resource_path('graphics/Player/jump.png')).convert_alpha()
 
         self.image = self.player_walk[self.player_index]
         self.rect = self.image.get_rect(midbottom = (80, 300))
         self.gravity = 0
 
-        self.jump_sound = pygame.mixer.Sound('audio/jump.mp3')
+        self.jump_sound = pygame.mixer.Sound(resource_path('audio/jump.mp3'))
         self.jump_sound.set_volume(0.5)
 
     def player_input(self):
@@ -48,13 +50,13 @@ class Obstacle(pygame.sprite.Sprite):
         super().__init__()
 
         if type == 'fly':
-            fly_1 = pygame.image.load('graphics/Fly/Fly1.png').convert_alpha()
-            fly_2 = pygame.image.load('graphics/Fly/Fly2.png').convert_alpha()
+            fly_1 = pygame.image.load(resource_path('graphics/Fly/Fly1.png')).convert_alpha()
+            fly_2 = pygame.image.load(resource_path('graphics/Fly/Fly2.png')).convert_alpha()
             self.frames = [fly_1, fly_2]
             y_pos = 210
         else:
-            snail_1 = pygame.image.load('graphics/Snail/snail1.png').convert_alpha()
-            snail_2 = pygame.image.load('graphics/Snail/snail2.png').convert_alpha()
+            snail_1 = pygame.image.load(resource_path('graphics/Snail/snail1.png')).convert_alpha()
+            snail_2 = pygame.image.load(resource_path('graphics/Snail/snail2.png')).convert_alpha()
             self.frames = [snail_1, snail_2]
             y_pos = 300
 
@@ -80,7 +82,7 @@ class Coin(pygame.sprite.Sprite):
     def __init__(self, y_pos, x_pos = None):
         super().__init__()
 
-        self.image = pygame.image.load('graphics/coin.png').convert_alpha()
+        self.image = pygame.image.load(resource_path('graphics/coin.png')).convert_alpha()
 
         if x_pos is None:
             x_pos = randint(850, 1100)
@@ -92,7 +94,21 @@ class Coin(pygame.sprite.Sprite):
 
         if self.rect.x <= -100:
             self.kill()
-        
+
+def resource_path(relative_path):
+    if hasattr(sys, '_MEIPASS'):
+        base_path = sys._MEIPASS
+    else:
+        base_path = os.path.dirname(os.path.abspath(__file__))
+
+    return os.path.join(base_path, relative_path)
+
+def high_score_path():
+    app_data = os.getenv('LOCALAPPDATA') or os.path.expanduser('~')
+    save_folder = os.path.join(app_data, 'PixelRush')
+    os.makedirs(save_folder, exist_ok = True)
+
+    return os.path.join(save_folder, 'high_score.txt')
 
 def display_score():
     current_time = int(pygame.time.get_ticks() / 1000) - start_time
@@ -187,70 +203,70 @@ def spawn_obstacle():
 
 def load_high_score():
     try:
-        with open('high_score.txt', 'r') as file:
+        with open(high_score_path(), 'r') as file:
             return int(file.read())
     except (FileNotFoundError, ValueError):
         return 0
-
+    
 def save_high_score(score):
-    with open('high_score.txt', 'w') as file:
+    with open(high_score_path(), 'w') as file:
         file.write(str(score))
 
 pygame.init()
 screen = pygame.display.set_mode((800, 400))
 pygame.display.set_caption('Pixel Rush')
 clock = pygame.time.Clock()
-test_font = pygame.font.Font('font/Pixeltype.ttf', 50)
+test_font = pygame.font.Font(resource_path('font/Pixeltype.ttf'), 50)
 game_active = False
 start_time = 0
 score = 0
 coin_count = 0
 high_score = 0
-bg_music = pygame.mixer.Sound('audio/music.wav')
+bg_music = pygame.mixer.Sound(resource_path('audio/music.wav'))
 bg_music.play(loops = -1)
 
 # Groups
-player = pygame.sprite.GroupSingle()
+player = pygame.sprite.GroupSingle() 
 player.add(Player())
 
 obstacle_group = pygame.sprite.Group()
 
 coin_group = pygame.sprite.Group()
 
-sky_surface = pygame.image.load('graphics/Sky.png').convert()
-ground_surface = pygame.image.load('graphics/ground.png').convert()
+sky_surface = pygame.image.load(resource_path('graphics/Sky.png')).convert()
+ground_surface = pygame.image.load(resource_path('graphics/ground.png')).convert()
 
 # Coin
-coin = pygame.image.load('graphics/coin.png').convert_alpha()
+coin = pygame.image.load(resource_path('graphics/coin.png')).convert_alpha()
 
 # Snail
-snail_frame_1 = pygame.image.load('graphics/Snail/snail1.png').convert_alpha()
-snail_frame_2 = pygame.image.load('graphics/Snail/snail2.png').convert_alpha()
+snail_frame_1 = pygame.image.load(resource_path('graphics/Snail/snail1.png')).convert_alpha()
+snail_frame_2 = pygame.image.load(resource_path('graphics/Snail/snail2.png')).convert_alpha()
 snail_frames = [snail_frame_1, snail_frame_2]
 snail_frame_index = 0
 snail_surf = snail_frames[snail_frame_index]
 
 # Fly
-fly_frame_1 = pygame.image.load('graphics/Fly/Fly1.png').convert_alpha()
-fly_frame_2 = pygame.image.load('graphics/Fly/Fly2.png').convert_alpha()
+fly_frame_1 = pygame.image.load(resource_path('graphics/Fly/Fly1.png')).convert_alpha()
+fly_frame_2 = pygame.image.load(resource_path('graphics/Fly/Fly2.png')).convert_alpha()
 fly_frames = [fly_frame_1, fly_frame_2]
 fly_frame_index = 0
 fly_surf = fly_frames[fly_frame_index]
 
 obstacle_rect_list = []
 
-player_walk_1 = pygame.image.load('graphics/Player/player_walk_1.png').convert_alpha()
-player_walk_2 = pygame.image.load('graphics/Player/player_walk_2.png').convert_alpha()
+player_walk_1 = pygame.image.load(resource_path('graphics/Player/player_walk_1.png')).convert_alpha()
+player_walk_2 = pygame.image.load(resource_path('graphics/Player/player_walk_2.png')).convert_alpha()
 player_walk = [player_walk_1, player_walk_2]
 player_index = 0
-player_jump = pygame.image.load('graphics/Player/jump.png').convert_alpha()
+player_jump = pygame.image.load(resource_path('graphics/Player/jump.png')).convert_alpha()
 
 player_surf = player_walk[player_index]
 player_rect = player_surf.get_rect(midbottom = (80, 300))
 player_gravity = 0
 
 # Intro screen
-player_stand = pygame.image.load('graphics/Player/player_stand.png').convert_alpha()
+player_stand = pygame.image.load(resource_path('graphics/Player/player_stand.png')).convert_alpha()
 player_stand = pygame.transform.rotozoom(player_stand, 0, 2)
 player_stand_rect = player_stand.get_rect(center = (400, 200))
 
