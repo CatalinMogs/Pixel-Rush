@@ -85,7 +85,7 @@ class Coin(pygame.sprite.Sprite):
         if x_pos is None:
             x_pos = randint(850, 1100)
 
-        self.rect = self.image.get_rect(midbottom = (randint(850, 1100), y_pos))
+        self.rect = self.image.get_rect(midbottom = (x_pos, y_pos))
 
     def update(self):
         self.rect.x -= 6
@@ -185,6 +185,17 @@ def spawn_obstacle():
 
     obstacle_group.add(new_obstacle)
 
+def load_high_score():
+    try:
+        with open('high_score.txt', 'r') as file:
+            return int(file.read())
+    except (FileNotFoundError, ValueError):
+        return 0
+
+def save_high_score(score):
+    with open('high_score.txt', 'w') as file:
+        file.write(str(score))
+
 pygame.init()
 screen = pygame.display.set_mode((800, 400))
 pygame.display.set_caption('Pixel Rush')
@@ -194,6 +205,7 @@ game_active = False
 start_time = 0
 score = 0
 coin_count = 0
+high_score = 0
 bg_music = pygame.mixer.Sound('audio/music.wav')
 bg_music.play(loops = -1)
 
@@ -261,6 +273,8 @@ pygame.time.set_timer(fly_animation_timer, 200)
 coin_timer = pygame.USEREVENT + 4
 pygame.time.set_timer(coin_timer, 2000)
 
+high_score = load_high_score()
+
 while True:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -272,6 +286,9 @@ while True:
                 game_active = True
                 start_time = int(pygame.time.get_ticks() / 1000)
                 coin_count = 0
+
+                obstacle_group.empty()
+                coin_group.empty()
 
         if game_active:
             if event.type == obstacle_timer:
@@ -323,15 +340,30 @@ while True:
         # collision
         game_active = collision_sprite()
 
+        if not game_active and score > high_score:
+            high_score = score
+            save_high_score(high_score)
+
     else:
         screen.fill((94, 129, 162))
         screen.blit(player_stand, player_stand_rect)
+
         obstacle_rect_list.clear()
         player.sprite.rect.midbottom = (80, 300)
         player.sprite.gravity = 0
 
         score_message = test_font.render(f'Your score: {score}', False, (111, 196, 169))
-        score_message_rect = score_message.get_rect(center = (400, 330))
+        score_message_rect = score_message.get_rect(center = (400, 300))
+
+        high_score_message = test_font.render(
+            f'High Score: {high_score}',
+            False,
+            (255, 215, 0)
+        )
+
+        high_score_rect = high_score_message.get_rect(center = (400, 380))
+        screen.blit(high_score_message, high_score_rect)
+
         screen.blit(game_name, game_name_rect)
 
         if score == 0:
